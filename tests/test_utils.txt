@@ -1,0 +1,48 @@
+import pytest
+from connection_manager.snowflake_manager import SnowflakeConnectionManager
+from connection_manager.mysql_manager import MySQLConnectionManager
+from utils.credentials_handler import CredentialsHandler
+from utils.comparisions import count_rows,compare_table_structures,compare_table_row_counts,get_table_structure
+from utils.logger import get_logger
+
+# Setup the connections for tests
+@pytest.fixture(scope="module")
+def snowflake_conn_manager():
+    credentials = CredentialsHandler('config/config.ini')
+    sf_manager = SnowflakeConnectionManager(**credentials.get_snowflake_credentials())
+    sf_connection = sf_manager.connect()
+
+@pytest.fixture(scope="module")
+def mysql_conn_manager():
+    credentials = CredentialsHandler('config/config.ini')
+    mysql_manager = MySQLConnectionManager(**credentials.get_mysql_credentials())
+    mysql_connection = mysql_manager.connect()
+
+
+def test_count_rows_snowflake(snowflake_conn_manager):
+    result = count_rows('test_table', sf_connection, 'snowflake')
+    assert isinstance(result, int), "Expected result to be an integer"
+
+# def test_count_rows_mysql(mysql_conn_manager):
+#     result = count_rows('test_table', mysql_conn_manager, 'mysql')
+#     assert isinstance(result, int), "Expected result to be an integer"
+
+# def test_compare_table_row_counts(snowflake_conn_manager, mysql_conn_manager):
+#     snowflake_count = count_rows('test_table', snowflake_conn_manager, 'snowflake')
+#     mysql_count = count_rows('test_table', mysql_conn_manager, 'mysql')
+#     result = compare_table_row_counts(snowflake_count, mysql_count)
+#     assert isinstance(result, bool), "Expected result to be a boolean"
+
+# def test_get_table_structure_snowflake(snowflake_conn_manager):
+#     structure = get_table_structure('test_table', snowflake_conn_manager, 'snowflake')
+#     assert isinstance(structure, list), "Expected result to be a list"
+
+# def test_get_table_structure_mysql(mysql_conn_manager):
+#     structure = get_table_structure('test_table', mysql_conn_manager, 'mysql')
+#     assert isinstance(structure, list), "Expected result to be a list"
+
+# def test_compare_table_structures(snowflake_conn_manager, mysql_conn_manager):
+#     snowflake_structure = get_table_structure('test_table', snowflake_conn_manager, 'snowflake')
+#     mysql_structure = get_table_structure('test_table', mysql_conn_manager, 'mysql')
+#     result = compare_table_structures(snowflake_structure, mysql_structure)
+#     assert isinstance(result, bool), "Expected result to be a boolean"

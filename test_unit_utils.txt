@@ -1,0 +1,67 @@
+import unittest
+from utils.comparisions import count_rows,compare_table_structures,compare_table_row_counts,get_table_structure
+from utils.credentials_handler import CredentialsHandler
+
+from connection_manager.snowflake_manager import SnowflakeConnectionManager
+from connection_manager.mysql_manager import MySQLConnectionManager
+from utils.comparisions import count_rows,compare_table_structures,compare_table_row_counts,get_table_structure
+
+class TestUtils(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        credentials = CredentialsHandler('config/config.ini')
+
+        """ Setup connections once for all tests. """
+
+        
+        sf_manager = SnowflakeConnectionManager(**credentials.get_snowflake_credentials())
+        cls.snowflake_conn_manager = sf_manager.connect()
+
+
+        # MySQL connection and check
+        mysql_manager = MySQLConnectionManager(**credentials.get_mysql_credentials())
+        cls.mysql_conn_manager = mysql_manager.connect()
+
+
+        # snowflake_credentials = CredentialHandler.get_credentials("snowflake_test")
+        # mysql_credentials = CredentialHandler.get_credentials("mysql_test")
+        
+        # cls.snowflake_conn_manager = SnowflakeConnectionManager(**snowflake_credentials)
+        # cls.mysql_conn_manager = MySQLConnectionManager(**mysql_credentials)
+
+    def test_count_rows(self):
+        result = count_rows('test_table', self.snowflake_conn_manager, 'snowflake')
+        self.assertIsInstance(result, int, "Expected result to be an integer")
+
+        result = count_rows('test_table', self.mysql_conn_manager, 'mysql')
+        self.assertIsInstance(result, int, "Expected result to be an integer")
+
+    def test_compare_table_row_counts(self):
+        snowflake_count = count_rows('test_table', self.snowflake_conn_manager, 'snowflake')
+        mysql_count = count_rows('test_table', self.mysql_conn_manager, 'mysql')
+        result = compare_table_row_counts(snowflake_count, mysql_count)
+        self.assertIsInstance(result, bool, "Expected result to be a boolean")
+
+    def test_get_table_structure(self):
+        snowflake_structure = get_table_structure('test_table', self.snowflake_conn_manager, 'snowflake')
+        self.assertIsInstance(snowflake_structure, list, "Expected result to be a list")
+
+        mysql_structure = get_table_structure('test_table', self.mysql_conn_manager, 'mysql')
+        self.assertIsInstance(mysql_structure, list, "Expected result to be a list")
+
+    def test_compare_table_structures(self):
+        snowflake_structure = get_table_structure('test_table', self.snowflake_conn_manager, 'snowflake')
+        mysql_structure = get_table_structure('test_table', self.mysql_conn_manager, 'mysql')
+
+        result = compare_table_structures(snowflake_structure, mysql_structure)
+        self.assertIsInstance(result, bool, "Expected result to be a boolean")
+
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup resources after all tests. """
+        cls.snowflake_conn_manager.close_connection()
+        cls.mysql_conn_manager.close_connection()
+
+if __name__ == "__main__":
+    unittest.main()
